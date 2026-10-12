@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机阵容生成器（位置不重复版）</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .input-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .role-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .role-group h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #555;
+            text-align: center;
+        }
+
+        .role-group input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .teams-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .team-card {
+            flex: 1;
+            min-width: 300px;
+            background: #fff;
+            border: 2px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .team-card h2 {
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .team-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .team-list li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .team-list li:last-child {
+            border-bottom: none;
+        }
+
+        .role-tag {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .error-msg {
+            color: red;
+            text-align: center;
+            margin-bottom: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>随机阵容生成器</h1>
+        
+        <div class="error-msg" id="errorMsg">请填写所有10个位置的玩家名称！</div>
+
+        <div class="input-section">
+            <!-- 上单 -->
+            <div class="role-group">
+                <h3>上单 (Top)</h3>
+                <input type="text" placeholder="玩家 1" class="player-input" data-role="上单">
+                <input type="text" placeholder="玩家 2" class="player-input" data-role="上单">
+            </div>
+            <!-- 打野 -->
+            <div class="role-group">
+                <h3>打野 (Jungle)</h3>
+                <input type="text" placeholder="玩家 1" class="player-input" data-role="打野">
+                <input type="text" placeholder="玩家 2" class="player-input" data-role="打野">
+            </div>
+            <!-- 中单 -->
+            <div class="role-group">
+                <h3>中单 (Mid)</h3>
+                <input type="text" placeholder="玩家 1" class="player-input" data-role="中单">
+                <input type="text" placeholder="玩家 2" class="player-input" data-role="中单">
+            </div>
+            <!-- AD -->
+            <div class="role-group">
+                <h3>射手 (ADC)</h3>
+                <input type="text" placeholder="玩家 1" class="player-input" data-role="AD">
+                <input type="text" placeholder="玩家 2" class="player-input" data-role="AD">
+            </div>
+            <!-- 辅助 -->
+            <div class="role-group">
+                <h3>辅助 (Support)</h3>
+                <input type="text" placeholder="玩家 1" class="player-input" data-role="辅助">
+                <input type="text" placeholder="玩家 2" class="player-input" data-role="辅助">
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button onclick="generateTeams()">随机分队</button>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <div class="teams-container">
+                <div class="team-card">
+                    <h2>队伍 A</h2>
+                    <ul class="team-list" id="teamAList"></ul>
+                </div>
+                <div class="team-card">
+                    <h2>队伍 B</h2>
+                    <ul class="team-list" id="teamBList"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateTeams() {
+            const inputs = document.querySelectorAll('.player-input');
+            const roles = ['上单', '打野', '中单', 'AD', '辅助'];
+            const teamA = [];
+            const teamB = [];
+            let isEmpty = false;
+
+            // 1. 按位置处理
+            roles.forEach(role => {
+                // 获取该位置的两个输入框
+                const roleInputs = Array.from(inputs).filter(input => input.getAttribute('data-role') === role);
+                const p1 = roleInputs[0].value.trim();
+                const p2 = roleInputs[1].value.trim();
+
+                if (!p1 || !p2) {
+                    isEmpty = true;
+                }
+
+                // 2. 随机决定该位置的两人谁去A队，谁去B队
+                // Math.random() < 0.5 为真时，p1去A，p2去B；否则 p1去B，p2去A
+                if (Math.random() < 0.5) {
+                    teamA.push({ name: p1 || '未填写', role: role });
+                    teamB.push({ name: p2 || '未填写', role: role });
+                } else {
+                    teamA.push({ name: p2 || '未填写', role: role });
+                    teamB.push({ name: p1 || '未填写', role: role });
+                }
+            });
+
+            const errorMsg = document.getElementById('errorMsg');
+            const resultSection = document.getElementById('resultSection');
+
+            if (isEmpty) {
+                errorMsg.style.display = 'block';
+                resultSection.style.display = 'none';
+                return;
+            } else {
+                errorMsg.style.display = 'none';
+            }
+
+            // 3. 渲染结果
+            renderTeam('teamAList', teamA);
+            renderTeam('teamBList', teamB);
+
+            resultSection.style.display = 'block';
+        }
+
+        function renderTeam(elementId, teamData) {
+            const list = document.getElementById(elementId);
+            list.innerHTML = '';
+
+            teamData.forEach(player => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${player.name}</span>
+                    <span class="role-tag">${player.role}</span>
+                `;
+                list.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
